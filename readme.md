@@ -23,7 +23,7 @@ A conversational chatbot built with **LangGraph**, **LangChain**, and **Google's
 
 2. **Create and activate the virtual environment**
    ```bash
-   python -m venv myenv
+   python3 -m venv myenv
    source myenv/bin/activate   # macOS/Linux
    # or: myenv\Scripts\activate  # Windows
    ```
