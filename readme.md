@@ -1,82 +1,298 @@
 # AI Chatbot
 
-A conversational chatbot built with **LangGraph**, **LangChain**, and **Google's Gemini** (gemini-2.5-flash). The bot keeps conversation history per thread using in-memory checkpoints so it can remember context within a session.
+A **tool-enabled AI chatbot built with LangGraph, LangChain, and Streamlit**.
+The chatbot supports **multiple conversation threads, tool calling, persistent memory using SQLite, and streaming responses**.
 
-## Features
+The system allows the AI to dynamically use tools such as:
 
-- **LangGraph** – State-graph workflow with a single chat node
-- **Gemini** – Google’s `gemini-2.5-flash` model for responses
-- **Thread memory** – `MemorySaver` checkpointer so each thread keeps its own message history
-- **Simple CLI** – Type in the notebook; type `exit`, `bye`, or `quit` to stop
+* Web search
+* Stock price lookup
+* Calculator
 
-## Prerequisites
+All conversations are **persisted in a SQLite checkpoint database**, so chat history is retained across sessions.
 
-- Python 3.13+ (project uses a venv named `myenv`)
-- A [Google AI API key](https://aistudio.google.com/apikey) for Gemini
+---
 
-## Setup
+# Features
 
-1. **Clone or open the project**
-   ```bash
-   cd /path/to/AI
-   ```
+* **LangGraph agent workflow**
+* **Tool calling support**
+* **Web search using DuckDuckGo**
+* **Stock price lookup using Alpha Vantage API**
+* **Calculator tool**
+* **Streaming AI responses**
+* **Persistent chat memory with SQLite**
+* **Multiple conversation threads**
+* **Streamlit UI**
 
-2. **Create and activate the virtual environment**
-   ```bash
-   python3 -m venv myenv
-   source myenv/bin/activate   # macOS/Linux
-   # or: myenv\Scripts\activate  # Windows
-   ```
+---
 
-3. **Install dependencies**
-   ```bash
-   pip install langgraph langchain-core langchain-google-genai python-dotenv
-   ```
-
-4. **Configure the API key**  
-   Create a `.env` file in the project root:
-   ```env
-   GOOGLE_API_KEY=your_google_api_key_here
-   ```
-   Do not commit `.env` or share your API key.
-
-## How to Run
-
-1. Activate the venv (if not already):
-   ```bash
-   source myenv/bin/activate
-   ```
-
-2. Start Jupyter and open the notebook:
-   ```bash
-   jupyter notebook chatbot.ipynb
-   ```
-   Or open `chatbot.ipynb` in VS Code / Cursor and run the cells.
-
-3. **Run all cells in order** (they load env, define the graph, and compile the chatbot).
-
-4. When you reach the cell with the `while True:` loop, type in the box and press Enter to chat. Type `exit`, `bye`, or `quit` to stop.
-
-## Project Structure
+# Project Structure
 
 ```
-AI/
-├── chatbot.ipynb    # Main notebook: graph definition + chat loop
-├── .env             # GOOGLE_API_KEY (create this, do not commit)
-├── myenv/           # Python virtual environment
-└── README.md        # This file
+.
+├── langgraph_backend.py      # LangGraph agent + tools + SQLite checkpoint
+├── streamlit_frontend.py     # Streamlit UI for the chatbot
+├── chatbot.db                # SQLite database for storing conversation states
+├── .env                      # Environment variables
+├── requirements.txt          # Project dependencies
+└── README.md
 ```
 
-## Dependencies (summary)
+---
 
-| Package                | Purpose                    |
-|------------------------|----------------------------|
-| `langgraph`           | State graph and checkpointer |
-| `langchain-core`      | Messages and base types    |
-| `langchain-google-genai` | Gemini chat model       |
-| `python-dotenv`       | Load `GOOGLE_API_KEY` from `.env` |
+# Architecture
 
-## Notes
+The system is built using a **LangGraph state machine**.
 
-- The chatbot uses a fixed `thread_id` (`'1'`) in the notebook, so all messages in that run share one conversation history.
-- For production, use a persistent checkpointer (e.g. database) instead of `MemorySaver` so state survives restarts.
+### Chat State
+
+The conversation state contains a list of messages.
+
+```python
+class ChatState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
+```
+
+Messages automatically accumulate across turns.
+
+---
+
+### Graph Flow
+
+```
+START
+  │
+  ▼
+chatNode (LLM)
+  │
+  ├── If tool required ───► tools
+  │                         │
+  │                         ▼
+  └────────────────────── chatNode
+                            │
+                            ▼
+                           END
+```
+
+* The **LLM node decides whether a tool is required**
+* If needed, execution moves to the **ToolNode**
+* The result is sent back to the LLM
+* The cycle continues until the final answer is produced
+
+---
+
+# Tools Available
+
+### Web Search
+
+Uses DuckDuckGo search.
+
+```
+DuckDuckGoSearchRun
+```
+
+---
+
+### Calculator Tool
+
+Supports arithmetic operations:
+
+* add
+* sub
+* mul
+* div
+
+Example input:
+
+```
+first_num = 5
+second_num = 3
+operation = "mul"
+```
+
+---
+
+### Stock Price Tool
+
+Fetches the latest stock data from **Alpha Vantage API**.
+
+Example:
+
+```
+get_stock_price("AAPL")
+```
+
+---
+
+# Memory & Persistence
+
+Conversation memory is stored using **LangGraph checkpointing with SQLite**.
+
+```python
+checkpointer = SqliteSaver(conn=connection)
+```
+
+Benefits:
+
+* Conversations persist across restarts
+* Multiple chat threads supported
+* Conversation history can be loaded anytime
+
+The Streamlit UI retrieves past conversations using:
+
+```
+retreiveAllThreads()
+```
+
+which scans the SQLite checkpoints. 
+
+---
+
+# Frontend (Streamlit)
+
+The frontend provides:
+
+* Chat interface
+* Sidebar conversation list
+* New chat creation
+* Streaming responses
+* Tool usage status indicators
+
+When the AI calls a tool, the UI shows a **status indicator** while the tool runs. 
+
+---
+
+# Installation
+
+## 1 Create Virtual Environment
+
+```bash
+python3 -m venv myenv
+```
+
+Activate it:
+
+Mac/Linux
+
+```bash
+source myenv/bin/activate
+```
+
+Windows
+
+```bash
+myenv\Scripts\activate
+```
+
+---
+
+## 2 Install Dependencies
+
+Create `requirements.txt`
+
+```
+streamlit
+langchain
+langgraph
+langchain-google-genai
+langchain-community
+duckduckgo-search
+python-dotenv
+requests
+```
+
+Install:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# Environment Variables
+
+Create a `.env` file.
+
+```
+GOOGLE_API_KEY=your_google_api_key
+```
+
+For stock price tool, replace the API key inside:
+
+```
+Alpha_Vantage_API_KEY
+```
+
+with your Alpha Vantage key.
+
+---
+
+# Running the Application
+
+Start the Streamlit app:
+
+```bash
+streamlit run streamlit_frontend.py
+```
+
+Then open:
+
+```
+http://localhost:8501
+```
+
+---
+
+# Example Queries
+
+Try asking:
+
+```
+What is the stock price of Tesla?
+```
+
+```
+Search latest news about AI
+```
+
+```
+Calculate 45 * 23
+```
+
+The AI will automatically decide whether to call a tool.
+
+---
+
+# Conversation Threads
+
+The chatbot supports **multiple chat sessions**.
+
+Features:
+
+* New chat button
+* Sidebar conversation history
+* Switching between threads
+* SQLite-backed persistent storage
+
+---
+
+# Key Technologies
+
+* **LangGraph** – agent workflow and state management
+* **LangChain** – tool integration
+* **Google Gemini** – LLM
+* **Streamlit** – UI
+* **SQLite** – persistent memory
+
+---
+
+# Future Improvements
+
+Possible extensions:
+
+* Add RAG with vector database
+* Add file upload support
+* Add conversation summarization
+* Add authentication
+* Add more tools (weather, finance APIs)
