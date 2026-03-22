@@ -27,9 +27,9 @@ A multi-turn chat UI built with **Streamlit**, **LangGraph**, and **Google Gemin
 
 2. **Virtual environment (recommended)**
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate   # macOS/Linux
-   # .venv\Scripts\activate    # Windows
+   python3 -m venv myenv
+   source myenv/bin/activate   # macOS/Linux
+   # myenv\Scripts\activate    # Windows
    ```
 
 3. **Install dependencies**
