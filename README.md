@@ -86,7 +86,3 @@ Chatbot/
 
 
 ---
-
-**Summary:** The current `readme.md` is out of date (it only documents the notebook and `MemorySaver`). The text above matches `streamlit_frontend.py` and `langgraph_backend.py`, including SQLite persistence and tools. If you want this file written for you in the repo, switch to **Agent mode** and ask again.
-
-**Small code note (for your README accuracy):** `langgraph_backend.py` defines `ChatState` twice (duplicate class); harmless in Python but worth cleaning up later. The stock URL still uses the literal `Alpha_Vantage_API_KEY` string until you wire a real key.
