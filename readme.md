@@ -1,4 +1,4 @@
-# AI Chatbot
+# Langgraph-Chatbot
 
 A **tool-enabled AI chatbot built with LangGraph, LangChain, and Streamlit**.
 The chatbot supports **multiple conversation threads, tool calling, persistent memory using SQLite, and streaming responses**.
