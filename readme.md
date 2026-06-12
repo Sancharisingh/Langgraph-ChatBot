@@ -202,12 +202,6 @@ python-dotenv
 requests
 ```
 
-Install:
-
-```bash
-pip install -r requirements.txt
-```
-
 ---
 
 # Environment Variables
